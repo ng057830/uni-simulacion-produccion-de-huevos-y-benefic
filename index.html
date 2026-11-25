@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simulador · Producción de Huevos y Beneficio por Docena</title>
+  <style>
+    :root {
+      --bg: #f6f8fc;
+      --card: #ffffff;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --muted: #64748b;
+      --blue: #2563eb;
+      --blue-soft: #eff6ff;
+      --amber: #d97706;
+      --amber-soft: #fffbeb;
+      --violet: #7c3aed;
+      --violet-soft: #f5f3ff;
+      --teal: #0d9488;
+      --teal-soft: #f0fdfa;
+      --green: #16a34a;
+      --green-soft: #dcfce7;
+      --red: #dc2626;
+      --radius: 14px;
+      --shadow: 0 4px 20px rgba(15, 23, 42, 0.05);
+      --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+    }
+
+    .wrap {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 24px 18px 48px;
+    }
+
+    /* Cabecera */
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.5rem;
+      letter-spacing: -0.02em;
+    }
+
+    header p {
+      margin: 3px 0 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    button {
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border-radius: 10px;
+      padding: 9px 15px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: transform 0.08s, background 0.15s, border-color 0.15s;
+    }
+
+    button:active { transform: translateY(1px); }
+
+    .btn-primary { background: var(--blue); color: #fff; }
+    .btn-primary:hover { background: #1d4ed8; }
+
+    .btn-soft {
+      background: #fff;
+      color: var(--text);
+      border-color: var(--border);
+    }
+    .btn-soft:hover { background: #f8fafc; border-color: #cbd5e1; }
+
+    /* Tarjetas */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    @media (max-width: 1080px) {
+      .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 640px) {
+      .grid-4 { grid-template-columns: 1fr; }
+    }
+
+    .step-badge {
+      display: inline-block;
+      font-size: 0.73rem;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 999px;
+      margin-bottom: 8px;
+    }
+    .b-blue { background: var(--blue-soft); color: var(--blue); }
+    .b-amber { background: var(--amber-soft); color: var(--amber); }
+    .b-teal { background: var(--teal-soft); color: var(--teal); }
+    .b-violet { background: var(--violet-soft); color: var(--violet); }
+
+    .card h2 {
+      margin: 0 0 10px;
+      font-size: 1.02rem;
+    }
+
+    .u-control {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 9px 11px;
+      margin-bottom: 10px;
+      transition: opacity 0.2s;
+    }
+
+    .u-control.disabled {
+      opacity: 0.45;
+    }
+
+    .u-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 5px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .u-val {
+      font-family: var(--mono);
+      font-size: 0.9rem;
+      color: var(--blue);
+      background: #fff;
+      border: 1px solid var(--border);
+      padding: 2px 7px;
+      border-radius: 6px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--blue);
+      cursor: pointer;
+    }
+
+    canvas.plot {
+      width: 100%;
+      height: 150px;
+      display: block;
+      background: #fbfdff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+
+    .formula-pill {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 9px;
+      margin-bottom: 10px;
+      color: #1e293b;
+      min-height: 46px;
+    }
+
+    .score-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding-top: 8px;
+      border-top: 1px dashed var(--border);
+      font-size: 0.84rem;
+      color: var(--muted);
+    }
+
+    .score-big {
+      font-family: var(--mono);
+      font-size: 1.15rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    /* Resumen del huevo */
+    .result-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 22px;
+      margin-bottom: 22px;
+    }
+
+    .res-eq {
+      font-family: var(--mono);
+      font-size: 1.12rem;
+      font-weight: 700;
+    }
+
+    .cat-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.96rem;
+      font-weight: 800;
+      padding: 8px 16px;
+      border-radius: 999px;
+    }
+
+    .cat-M { background: #fef3c7; color: #92400e; }
+    .cat-L { background: #dbeafe; color: #1e40af; }
+    .cat-XL { background: #ede9fe; color: #5b21b6; }
+
+    /* Bloque 2: Una docena (cartonera 2x6) */
+    .section-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .section-head h2 { margin: 0; font-size: 1.12rem; }
+    .section-sub { font-size: 0.85rem; color: var(--muted); }
+
+    .carton-grid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    @media (max-width: 800px) {
+      .carton-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+
+    .egg-tile {
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 8px;
+      text-align: center;
+      cursor: pointer;
+      background: #f8fafc;
+      transition: transform 0.1s, border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .egg-tile:hover {
+      transform: translateY(-2px);
+      border-color: var(--blue);
+    }
+
+    .egg-tile.active {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 2.5px rgba(37, 99, 235, 0.25);
+    }
+
+    .egg-tile.t-M { background: #fffbeb; }
+    .egg-tile.t-L { background: #eff6ff; }
+    .egg-tile.t-XL { background: #f5f3ff; }
+
+    .egg-num { font-size: 0.72rem; color: var(--muted); font-weight: 600; }
+    .egg-cat { font-size: 1rem; font-weight: 800; margin: 2px 0; }
+    .egg-w { font-family: var(--mono); font-size: 0.78rem; color: #334155; }
+    .egg-b { font-family: var(--mono); font-size: 0.84rem; font-weight: 700; color: var(--green); margin-top: 2px; }
+
+    .dozen-summary {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-family: var(--mono);
+      font-size: 0.92rem;
+    }
+
+    /* Bloque 3: N docenas */
+    select {
+      font-family: inherit;
+      font-size: 0.88rem;
+      padding: 8px 10px;
+      border-radius: 9px;
+      border: 1px solid var(--border);
+      background: #fff;
+    }
+
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    @media (max-width: 680px) {
+      .kpis { grid-template-columns: 1fr; }
+    }
+
+    .kpi {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      text-align: center;
+    }
+
+    .kpi .k-lbl { font-size: 0.82rem; color: var(--muted); font-weight: 600; }
+    .kpi .k-num { font-family: var(--mono); font-size: 1.55rem; font-weight: 800; margin-top: 2px; }
+    .kpi .k-sub { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+
+    .dots-title {
+      font-size: 0.84rem;
+      color: var(--muted);
+      margin-bottom: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .dots-grid {
+      display: grid;
+      grid-template-columns: repeat(25, minmax(0, 1fr));
+      gap: 4px;
+      margin-bottom: 16px;
+    }
+
+    .dot {
+      aspect-ratio: 1 / 1;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: transform 0.08s;
+    }
+
+    .dot:hover {
+      transform: scale(1.35);
+      box-shadow: 0 0 0 1.5px #0f172a;
+      z-index: 2;
+    }
+
+    .dot.selected {
+      box-shadow: 0 0 0 2.5px #0f172a;
+      z-index: 2;
+    }
+
+    details {
+      border-top: 1px solid var(--border);
+      padding-top: 12px;
+    }
+
+    summary {
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--blue);
+      user-select: none;
+    }
+
+    .table-scroll {
+      max-height: 280px;
+      overflow-y: auto;
+      margin-top: 10px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.84rem;
+      font-family: var(--mono);
+    }
+
+    th, td {
+      padding: 7px 10px;
+      border-bottom: 1px solid var(--border);
+      text-align: right;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      background: #f1f5f9;
+      font-family: var(--sans);
+      font-weight: 700;
+      color: #334155;
+    }
+
+    td:first-child, th:first-child { text-align: center; }
+    tr.row-click { cursor: pointer; }
+    tr.row-click:hover { background: #eff6ff; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Simulador · Beneficio en Producción de Huevos</h1>
+        <p>Desglose paso a paso: <strong>T + Y → Peso W → Categoría (M / L / XL) → Precio P → Beneficio B = P − 0.02 €</strong>.</p>
+      </div>
+      <div class="btn-row">
+        <button class="btn-primary" id="btnRandomEgg">🥚 Nuevo huevo</button>
+        <button class="btn-soft" id="btnExampleC">📌 Ejemplo del ejercicio (Inciso c)</button>
+      </div>
+    </header>
+
+    <!-- BLOQUE 1: 1 HUEVO DESGLOSADO EN 4 PASOS -->
+    <section class="grid-4">
+      <!-- Paso 1: T -->
+      <article class="card">
+        <span class="step-badge b-blue">Paso 1 · Simular T</span>
+        <h2>Base del peso (discreta)</h2>
+
+        <div class="u-control">
+          <div class="u-row">
+            <label for="u1Range">Aleatorio U₁</label>
+            <span class="u-val" id="u1Val">0.8223</span>
+          </div>
+          <input type="range" id="u1Range" min="0.0001" max="0.9999" step="0.0001" value="0.8223" />
+        </div>
+
+        <canvas id="cT" class="plot"></canvas>
+
+        <div class="formula-pill" id="fT">
+          U₁ = 0.8223 ≥ 0.60<br>
+          Tramo [0.60, 1) → T = 59 g
+        </div>
+
+        <div class="score-line">
+          <span>49 g (60 %) · 59 g (40 %)</span>
+          <span class="score-big" style="color:var(--blue);" id="outT">T = 59 g</span>
+        </div>
+      </article>
+
+      <!-- Paso 2: Y -->
+      <article class="card">
+        <span class="step-badge b-amber">Paso 2 · Simular Y</span>
+        <h2>Complemento (por tramos)</h2>
+
+        <div class="u-control">
+          <div class="u-row">
+            <label for="u2Range">Aleatorio U₂</label>
+            <span class="u-val" id="u2Val">0.9154</span>
+          </div>
+          <input type="range" id="u2Range" min="0.0001" max="0.9999" step="0.0001" value="0.9154" />
+        </div>
+
+        <canvas id="cY" class="plot"></canvas>
+
+        <div class="formula-pill" id="fY">
+          U₂ ≥ 2/3 (Tramo 2)<br>
+          Y = 3·(0.9154) − 1 = 1.7462
+        </div>
+
+        <div class="score-line">
+          <span>Corte en U₂ = 2/3</span>
+          <span class="score-big" style="color:var(--amber);" id="outY">Y = 1.746 g</span>
+        </div>
+      </article>
+
+      <!-- Paso 3: W y C -->
+      <article class="card">
+        <span class="step-badge b-teal">Paso 3 · Calcular W y C</span>
+        <h2>Peso y clasificación</h2>
+
+        <div class="u-control" style="background:#f0fdfa; border-color:#ccfbf1;">
+          <div class="u-row" style="margin-bottom:0;">
+            <span>Suma directa</span>
+            <span class="u-val" style="color:var(--teal);" id="wBadge">60.7462 g</span>
+          </div>
+          <div style="font-size:0.78rem; color:var(--muted); margin-top:4px;">W = T + Y (sin nuevo aleatorio)</div>
+        </div>
+
+        <canvas id="cW" class="plot"></canvas>
+
+        <div class="formula-pill" id="fW">
+          W = 59 + 1.7462 = 60.7462 g<br>
+          Como W &gt; 60 g → Categoría <strong>XL</strong>
+        </div>
+
+        <div class="score-line">
+          <span>M &lt;50 · L 50–60 · XL &gt;60</span>
+          <span class="score-big" style="color:var(--teal);" id="outC">C = XL</span>
+        </div>
+      </article>
+
+      <!-- Paso 4: Z y Precio P -->
+      <article class="card">
+        <span class="step-badge b-violet">Paso 4 · Precio P</span>
+        <h2>Fijo o Exponencial Z (XL)</h2>
+
+        <div class="u-control" id="u3Box">
+          <div class="u-row">
+            <label for="u3Range">Aleatorio U₃ (solo XL)</label>
+            <span class="u-val" id="u3Val">0.9512</span>
+          </div>
+          <input type="range" id="u3Range" min="0.0001" max="0.9999" step="0.0001" value="0.9512" />
+        </div>
+
+        <canvas id="cZ" class="plot"></canvas>
+
+        <div class="formula-pill" id="fZ">
+          Z = −5·ln(1−0.9512) = 15.10<br>
+          Z &gt; 6 → tope 6/10 = 0.60 €
+        </div>
+
+        <div class="score-line">
+          <span id="zHint">M: 0.10 · L: 0.20 · XL: 0.40–0.60</span>
+          <span class="score-big" style="color:var(--violet);" id="outP">P = 0.60 €</span>
+        </div>
+      </article>
+    </section>
+
+    <!-- RESULTADO DEL HUEVO -->
+    <section class="card result-bar">
+      <div>
+        <div style="font-size:0.78rem; color:var(--muted); font-weight:700;">BENEFICIO NETO DE ESTE HUEVO (COSTE = 0.02 €)</div>
+        <div class="res-eq" id="resEggEq">B = P − 0.02 = 0.600 − 0.020 = 0.580 €</div>
+      </div>
+      <div class="btn-row">
+        <span class="cat-pill cat-XL" id="resEggCat">Categoría XL · 60.75 g</span>
+        <span class="cat-pill" style="background:var(--green-soft); color:#166534;" id="resEggB">Beneficio: +0.58 €</span>
+      </div>
+    </section>
+
+    <!-- BLOQUE 2: UNA DOCENA (12 HUEVOS) -->
+    <section class="card" style="margin-bottom:22px;">
+      <div class="section-head">
+        <div>
+          <h2>Paso 5 · Una docena completa (12 huevos independientes)</h2>
+          <div class="section-sub">Haz clic en cualquier huevo de la caja para ver su desglose exacto arriba.</div>
+        </div>
+        <button class="btn-soft" id="btnNewDozen">🧺 Nueva docena (12 huevos)</button>
+      </div>
+
+      <div class="carton-grid" id="cartonGrid"></div>
+
+      <div class="dozen-summary" id="dozenSummary">
+        <span>Docena actual: —</span>
+        <strong>D = ∑ Pᵢ − 0.24 € = —</strong>
+      </div>
+    </section>
+
+    <!-- BLOQUE 3: SIMULAR N DOCENAS (INCISO b) -->
+    <section class="card">
+      <div class="section-head">
+        <div>
+          <h2>Inciso b · Estimar el beneficio medio de una docena (n docenas)</h2>
+          <div class="section-sub">Cada cuadro de la matriz es 1 docena completa (12 huevos). Haz clic en cualquier cuadro para abrir esa docena arriba.</div>
+        </div>
+        <div class="btn-row">
+          <select id="batchSize" aria-label="Número de docenas">
+            <option value="250" selected>250 docenas</option>
+            <option value="1000">1.000 docenas</option>
+            <option value="5000">5.000 docenas</option>
+          </select>
+          <button class="btn-primary" id="btnRunBatch">▶ Simular docenas</button>
+        </div>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi">
+          <div class="k-lbl">Beneficio medio por docena (D̄)</div>
+          <div class="k-num" style="color:var(--green);" id="kpiMeanD">—</div>
+          <div class="k-sub">Referencia teórica exacta ≈ 2.12 €</div>
+        </div>
+        <div class="kpi">
+          <div class="k-lbl">Rango observado (mín / máx)</div>
+          <div class="k-num" style="color:var(--blue);" id="kpiRangeD">—</div>
+          <div class="k-sub" id="kpiCountSub">en 250 docenas</div>
+        </div>
+        <div class="kpi">
+          <div class="k-lbl">Reparto de huevos (M / L / XL)</div>
+          <div class="k-num" style="font-size:1.15rem; color:#334155;" id="kpiCats">—</div>
+          <div class="k-sub">Teórico: 40 % M · 46.7 % L · 13.3 % XL</div>
+        </div>
+      </div>
+
+      <div class="dots-title">
+        <span id="dotsTitleText"><strong>Mapa de docenas</strong> (matriz 10 × 25 = 250 docenas)</span>
+        <span>
+          <span style="color:#cbd5e1;">■</span> &lt; 1.80 € &nbsp;
+          <span style="color:#86efac;">■</span> 1.80–2.20 € &nbsp;
+          <span style="color:#22c55e;">■</span> 2.20–2.60 € &nbsp;
+          <span style="color:#15803d;">■</span> &gt; 2.60 €
+        </span>
+      </div>
+      <div class="dots-grid" id="dotsGrid"></div>
+
+      <details>
+        <summary>Ver tabla de docenas simuladas (primeras 250)</summary>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Docena #</th>
+                <th>M</th>
+                <th>L</th>
+                <th>XL</th>
+                <th>∑ Pᵢ (€)</th>
+                <th>Coste (€)</th>
+                <th>Beneficio D (€)</th>
+              </tr>
+            </thead>
+            <tbody id="batchTableBody"></tbody>
+          </table>
+        </div>
+      </details>
+    </section>
+  </div>
+
+  <script>
+  (() => {
+    "use strict";
+
+    const TWO_THIRDS = 2 / 3;
+    const COST_EGG = 0.02;
+
+    // -------------------------------------------------------------------------
+    // MODELO EXACTO DEL EJERCICIO (Almudena20261125.docx)
+    // -------------------------------------------------------------------------
+    function evalEgg(u1, u2, u3) {
+      const sU1 = Math.min(0.999999, Math.max(0.000001, u1));
+      const sU2 = Math.min(0.999999, Math.max(0.000001, u2));
+      const sU3 = Math.min(0.999999, Math.max(0.000001, u3));
+
+      // 1. T discreta
+      const T = sU1 < 0.60 ? 49 : 59;
+
+      // 2. Y continua por tramos (corte F_Y(1) = 2/3)
+      let Y, tramoY;
+      if (sU2 < TWO_THIRDS) {
+        tramoY = 1;
+        Y = 1.5 * sU2;
+      } else {
+        tramoY = 2;
+        Y = 3 * sU2 - 1;
+      }
+
+      // 3. Peso y categoría
+      const W = T + Y;
+      let C = "L";
+      if (W < 50) C = "M";
+      else if (W > 60) C = "XL";
+
+      // 4. Precio P (solo usa Z si es XL)
+      let Z = null;
+      let P = 0.20;
+      if (C === "M") {
+        P = 0.10;
+      } else if (C === "L") {
+        P = 0.20;
+      } else {
+        Z = -5 * Math.log(1 - sU3);
+        P = Math.min(Math.max(Z, 4), 6) / 10;
+      }
+
+      const B = P - COST_EGG;
+      return { u1: sU1, u2: sU2, u3: sU3, T, Y, tramoY, W, C, Z, P, B };
+    }
+
+    function simulateDozen(idx = 1) {
+      const eggs = [];
+      let sumP = 0, cntM = 0, cntL = 0, cntXL = 0;
+      for (let i = 0; i < 12; i++) {
+        const e = evalEgg(Math.random(), Math.random(), Math.random());
+        eggs.push(e);
+        sumP += e.P;
+        if (e.C === "M") cntM++;
+        else if (e.C === "L") cntL++;
+        else cntXL++;
+      }
+      const D = sumP - 12 * COST_EGG;
+      return { idx, eggs, sumP, D, cntM, cntL, cntXL };
+    }
+
+    // -------------------------------------------------------------------------
+    // UTILIDAD CANVAS HiDPI (altura fija 150px, nunca se alarga)
+    // -------------------------------------------------------------------------
+    function prepCanvas(canvas) {
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      const w = Math.max(220, Math.round(rect.width || 270));
+      const h = 150;
+      const tw = Math.round(w * dpr);
+      const th = Math.round(h * dpr);
+      if (canvas.width !== tw || canvas.height !== th) {
+        canvas.width = tw;
+        canvas.height = th;
+      }
+      const ctx = canvas.getContext("2d");
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, w, h);
+      return { ctx, w, h };
+    }
+
+    // Gráfica 1: Barra de T (0..0.60 -> 49, 0.60..1 -> 59)
+    function drawTPlot(e) {
+      const { ctx, w, h } = prepCanvas(document.getElementById("cT"));
+      const padL = 16, padR = 16, bw = w - padL - padR;
+      const by = 54, bh = 42;
+      const splitX = padL + 0.60 * bw;
+
+      // Tramo 49
+      ctx.fillStyle = e.T === 49 ? "#bfdbfe" : "#e2e8f0";
+      ctx.fillRect(padL, by, 0.60 * bw, bh);
+      ctx.strokeStyle = e.T === 49 ? "#1d4ed8" : "#fff";
+      ctx.lineWidth = e.T === 49 ? 2.4 : 1.5;
+      ctx.strokeRect(padL, by, 0.60 * bw, bh);
+
+      // Tramo 59
+      ctx.fillStyle = e.T === 59 ? "#bfdbfe" : "#e2e8f0";
+      ctx.fillRect(splitX, by, 0.40 * bw, bh);
+      ctx.strokeStyle = e.T === 59 ? "#1d4ed8" : "#fff";
+      ctx.lineWidth = e.T === 59 ? 2.4 : 1.5;
+      ctx.strokeRect(splitX, by, 0.40 * bw, bh);
+
+      ctx.fillStyle = "#1e3a8a";
+      ctx.font = "700 12px system-ui, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("T = 49 g", padL + 0.30 * bw, by + 20);
+      ctx.font = "10px ui-monospace, monospace";
+      ctx.fillText("60 %", padL + 0.30 * bw, by + 34);
+
+      ctx.font = "700 12px system-ui, sans-serif";
+      ctx.fillText("T = 59 g", splitX + 0.20 * bw, by + 20);
+      ctx.font = "10px ui-monospace, monospace";
+      ctx.fillText("40 %", splitX + 0.20 * bw, by + 34);
+
+      // Aguja U1
+      const ux = padL + e.u1 * bw;
+      ctx.strokeStyle = "#dc2626";
+      ctx.lineWidth = 2.2;
+      ctx.beginPath(); ctx.moveTo(ux, by - 16); ctx.lineTo(ux, by + bh + 12); ctx.stroke();
+      ctx.fillStyle = "#dc2626";
+      ctx.beginPath(); ctx.moveTo(ux, by - 3); ctx.lineTo(ux - 5, by - 12); ctx.lineTo(ux + 5, by - 12); ctx.closePath(); ctx.fill();
+
+      ctx.font = "700 11px ui-monospace, monospace";
+      ctx.fillText(`U₁=${e.u1.toFixed(4)}`, Math.min(w - 42, Math.max(42, ux)), by - 22);
+
+      ctx.fillStyle = "#64748b";
+      ctx.font = "10px ui-monospace, monospace";
+      ctx.textAlign = "left"; ctx.fillText("0.00", padL, by + bh + 25);
+      ctx.textAlign = "center"; ctx.fillText("0.60", splitX, by + bh + 25);
+      ctx.textAlign = "right"; ctx.fillText("1.00", padL + bw, by + bh + 25);
+    }
+
+    // Gráfica 2: F_Y(y) en [0, 2] con corte en (1, 2/3)
+    function drawYPlot(e) {
+      const { ctx, w, h } = prepCanvas(document.getElementById("cY"));
+      const m = { l: 34, r: 12, t: 14, b: 26 };
+      const pw = w - m.l - m.r, ph = h - m.t - m.b;
+      const xOf = (y) => m.l + (y / 2) * pw;
+      const yOf = (u) => m.t + ph - u * ph;
+
+      ctx.strokeStyle = "#94a3b8";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(m.l, m.t); ctx.lineTo(m.l, h - m.b); ctx.lineTo(w - m.r, h - m.b); ctx.stroke();
+
+      // Corte en (1, 2/3)
+      ctx.save();
+      ctx.setLineDash([3, 3]);
+      ctx.strokeStyle = "#cbd5e1";
+      ctx.beginPath(); ctx.moveTo(m.l, yOf(TWO_THIRDS)); ctx.lineTo(xOf(1), yOf(TWO_THIRDS)); ctx.lineTo(xOf(1), h - m.b); ctx.stroke();
+      ctx.restore();
+
+      // Tramo 1: (0,0) -> (1, 2/3)
+      ctx.strokeStyle = "#d97706";
+      ctx.lineWidth = 2.4;
+      ctx.beginPath(); ctx.moveTo(xOf(0), yOf(0)); ctx.lineTo(xOf(1), yOf(TWO_THIRDS)); ctx.stroke();
+
+      // Tramo 2: (1, 2/3) -> (2, 1)
+      ctx.strokeStyle = "#0ea5e9";
+      ctx.lineWidth = 2.4;
+      ctx.beginPath(); ctx.moveTo(xOf(1), yOf(TWO_THIRDS)); ctx.lineTo(xOf(2), yOf(1)); ctx.stroke();
+
+      // Guías U2 -> Y
+      const px = xOf(e.Y), py = yOf(e.u2);
+      ctx.save();
+      ctx.setLineDash([4, 3]);
+      ctx.strokeStyle = "#dc2626";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath(); ctx.moveTo(m.l, py); ctx.lineTo(px, py); ctx.lineTo(px, h - m.b); ctx.stroke();
+      ctx.restore();
+
+      ctx.fillStyle = "#dc2626";
+      ctx.beginPath(); ctx.arc(px, py, 4.5, 0, Math.PI * 2); ctx.fill();
+
+      ctx.fillStyle = "#475569";
+      ctx.font = "10px ui-monospace, monospace";
+      ctx.textAlign = "right";
+      ctx.fillText("1", m.l - 4, m.t + 4);
+      ctx.fillText("2/3", m.l - 4, yOf(TWO_THIRDS) + 3);
+      ctx.fillText("0", m.l - 4, h - m.b + 3);
+
+      ctx.textAlign = "center";
+      ctx.fillText("1", xOf(1), h - m.b + 12);
+      ctx.fillText("2", xOf(2), h - m.b + 12);
+      ctx.fillStyle = "#dc2626";
+      ctx.font = "700 10px ui-monospace, monospace";
+      ctx.fillText(`Y=${e.Y.toFixed(2)}`, Math.min(w - 28, Math.max(m.l + 26, px)), h - 4);
+    }
+
+    // Gráfica 3: Recta visual del peso W en [49, 61] con zonas M, L, XL
+    function drawWPlot(e) {
+      const { ctx, w, h } = prepCanvas(document.getElementById("cW"));
+      const padL = 16, padR = 16, bw = w - padL - padR;
+      const by = 54, bh = 42;
+      const xOf = (val) => padL + ((val - 49) / 12) * bw;
+
+      const x50 = xOf(50), x60 = xOf(60);
+
+      // Zonas
+      const zones = [
+        { x1: padL, x2: x50, col: "#fef3c7", stroke: "#d97706", lbl: "M", active: e.C === "M" },
+        { x1: x50, x2: x60, col: "#dbeafe", stroke: "#2563eb", lbl: "L (50–60 g)", active: e.C === "L" },
+        { x1: x60, x2: padL + bw, col: "#ede9fe", stroke: "#7c3aed", lbl: "XL", active: e.C === "XL" }
+      ];
+
+      zones.forEach(z => {
+        ctx.fillStyle = z.col;
+        ctx.fillRect(z.x1, by, z.x2 - z.x1, bh);
+        ctx.strokeStyle = z.active ? z.stroke : "#ffffff";
+        ctx.lineWidth = z.active ? 2.5 : 1.5;
+        ctx.strokeRect(z.x1, by, z.x2 - z.x1, bh);
+        ctx.fillStyle = z.stroke;
+        ctx.font = "700 11px system-ui, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(z.lbl, (z.x1 + z.x2) / 2, by + 25);
+      });
+
+      // Marcador W
+      const wx = xOf(Math.min(61, Math.max(49, e.W)));
+      ctx.strokeStyle = "#dc2626";
+      ctx.lineWidth = 2.2;
+      ctx.beginPath(); ctx.moveTo(wx, by - 16); ctx.lineTo(wx, by + bh + 12); ctx.stroke();
+      ctx.fillStyle = "#dc2626";
+      ctx.beginPath(); ctx.moveTo(wx, by - 3); ctx.lineTo(wx - 5, by - 12); ctx.lineTo(wx + 5, by - 12); ctx.closePath(); ctx.fill();
+
+      ctx.font = "700 11px ui-monospace, monospace";
+      ctx.fillText(`W=${e.W.toFixed(2)} g`, Math.min(w - 44, Math.max(44, wx)), by - 22);
+
+      ctx.fillStyle = "#64748b";
+      ctx.font = "10px ui-monospace, monospace";
+      ctx.textAlign = "left"; ctx.fillText("49", padL, by + bh + 25);
+      ctx.textAlign = "center"; ctx.fillText("50", x50 + 5, by + bh + 25);
+      ctx.textAlign = "center"; ctx.fillText("60", x60 - 5, by + bh + 25);
+      ctx.textAlign = "right"; ctx.fillText("61", padL + bw, by + bh + 25);
+    }
+
+    // Gráfica 4: Exponencial Z (solo XL) o aviso de precio fijo
+    function drawZPlot(e) {
+      const { ctx, w, h } = prepCanvas(document.getElementById("cZ"));
+      if (e.C !== "XL") {
+        ctx.fillStyle = "#64748b";
+        ctx.font = "600 12px system-ui, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(`Categoría ${e.C}: precio fijo`, w / 2, h / 2 - 8);
+        ctx.fillStyle = "#0f172a";
+        ctx.font = "800 18px ui-monospace, monospace";
+        ctx.fillText(`${e.P.toFixed(2)} €`, w / 2, h / 2 + 16);
+        ctx.fillStyle = "#94a3b8";
+        ctx.font = "11px system-ui, sans-serif";
+        ctx.fillText("(No se simula Z)", w / 2, h / 2 + 36);
+        return;
+      }
+
+      const m = { l: 34, r: 12, t: 14, b: 26 };
+      const pw = w - m.l - m.r, ph = h - m.t - m.b;
+      const maxZ = Math.max(16, e.Z + 2);
+      const xOf = (z) => m.l + (z / maxZ) * pw;
+      const yOf = (u) => m.t + ph - u * ph;
+
+      // Banda [4, 6] donde P_XL varía linealmente
+      ctx.fillStyle = "rgba(124, 58, 237, 0.10)";
+      ctx.fillRect(xOf(4), m.t, xOf(6) - xOf(4), ph);
+
+      ctx.strokeStyle = "#94a3b8";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(m.l, m.t); ctx.lineTo(m.l, h - m.b); ctx.lineTo(w - m.r, h - m.b); ctx.stroke();
+
+      // Curva F_Z(z) = 1 - e^(-z/5)
+      ctx.strokeStyle = "#7c3aed";
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      for (let i = 0; i <= 80; i++) {
+        const zv = (maxZ * i) / 80;
+        const fv = 1 - Math.exp(-zv / 5);
+        if (i === 0) ctx.moveTo(xOf(zv), yOf(fv));
+        else ctx.lineTo(xOf(zv), yOf(fv));
+      }
+      ctx.stroke();
+
+      // Guías U3 -> Z
+      const px = xOf(e.Z), py = yOf(e.u3);
+      ctx.save();
+      ctx.setLineDash([4, 3]);
+      ctx.strokeStyle = "#dc2626";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath(); ctx.moveTo(m.l, py); ctx.lineTo(px, py); ctx.lineTo(px, h - m.b); ctx.stroke();
+      ctx.restore();
+
+      ctx.fillStyle = "#dc2626";
+      ctx.beginPath(); ctx.arc(px, py, 4.5, 0, Math.PI * 2); ctx.fill();
+
+      ctx.fillStyle = "#475569";
+      ctx.font = "10px ui-monospace, monospace";
+      ctx.textAlign = "right";
+      ctx.fillText("1", m.l - 4, m.t + 4);
+      ctx.fillText("0", m.l - 4, h - m.b + 3);
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#7c3aed";
+      ctx.fillText("4–6", xOf(5), m.t + 20);
+      ctx.fillStyle = "#dc2626";
+      ctx.font = "700 10px ui-monospace, monospace";
+      ctx.fillText(`Z=${e.Z.toFixed(2)}`, Math.min(w - 28, Math.max(m.l + 26, px)), h - 5);
+    }
+
+    // -------------------------------------------------------------------------
+    // RENDERIZADO DE 1 HUEVO
+    // -------------------------------------------------------------------------
+    let curU = { u1: 0.8223, u2: 0.9154, u3: 0.9512 };
+
+    function renderEgg(u1, u2, u3) {
+      curU = { u1, u2, u3 };
+      document.getElementById("u1Range").value = u1;
+      document.getElementById("u2Range").value = u2;
+      document.getElementById("u3Range").value = u3;
+      document.getElementById("u1Val").textContent = u1.toFixed(4);
+      document.getElementById("u2Val").textContent = u2.toFixed(4);
+      document.getElementById("u3Val").textContent = u3.toFixed(4);
+
+      const e = evalEgg(u1, u2, u3);
+
+      // Paso 1
+      document.getElementById("fT").innerHTML = e.T === 49
+        ? `U₁ = ${e.u1.toFixed(4)} &lt; 0.60<br>Tramo [0, 0.60) → <strong>T = 49 g</strong>`
+        : `U₁ = ${e.u1.toFixed(4)} ≥ 0.60<br>Tramo [0.60, 1) → <strong>T = 59 g</strong>`;
+      document.getElementById("outT").textContent = `T = ${e.T} g`;
+
+      // Paso 2
+      document.getElementById("fY").innerHTML = e.tramoY === 1
+        ? `U₂ &lt; 2/3 (Tramo 1)<br>Y = (3/2)·${e.u2.toFixed(4)} = <strong>${e.Y.toFixed(4)}</strong>`
+        : `U₂ ≥ 2/3 (Tramo 2)<br>Y = 3·${e.u2.toFixed(4)} − 1 = <strong>${e.Y.toFixed(4)}</strong>`;
+      document.getElementById("outY").textContent = `Y = ${e.Y.toFixed(3)} g`;
+
+      // Paso 3
+      document.getElementById("wBadge").textContent = `${e.W.toFixed(4)} g`;
+      const condTxt = e.C === "M" ? "W &lt; 50 g" : (e.C === "L" ? "50 ≤ W ≤ 60 g" : "W &gt; 60 g");
+      document.getElementById("fW").innerHTML =
+        `W = ${e.T} + ${e.Y.toFixed(4)} = <strong>${e.W.toFixed(4)} g</strong><br>${condTxt} → Categoría <strong>${e.C}</strong>`;
+      document.getElementById("outC").textContent = `C = ${e.C}`;
+
+      // Paso 4
+      const u3Box = document.getElementById("u3Box");
+      if (e.C === "XL") {
+        u3Box.classList.remove("disabled");
+        let clipTxt = "4 ≤ Z ≤ 6 → Z/10";
+        if (e.Z < 4) clipTxt = "Z &lt; 4 → mínimo 4/10 = 0.40 €";
+        else if (e.Z > 6) clipTxt = "Z &gt; 6 → máximo 6/10 = 0.60 €";
+        document.getElementById("fZ").innerHTML =
+          `Z = −5·ln(1−${e.u3.toFixed(4)}) = <strong>${e.Z.toFixed(2)}</strong><br>${clipTxt}`;
+      } else {
+        u3Box.classList.add("disabled");
+        document.getElementById("fZ").innerHTML =
+          `Categoría <strong>${e.C}</strong> → precio fijo<br>No necesita generar U₃ ni Z`;
+      }
+      document.getElementById("outP").textContent = `P = ${e.P.toFixed(2)} €`;
+
+      // Barra resumen
+      document.getElementById("resEggEq").textContent =
+        `B = P − 0.02 = ${e.P.toFixed(3)} − 0.020 = ${e.B.toFixed(3)} €`;
+      const catEl = document.getElementById("resEggCat");
+      catEl.textContent = `Categoría ${e.C} · ${e.W.toFixed(2)} g`;
+      catEl.className = `cat-pill cat-${e.C}`;
+      document.getElementById("resEggB").textContent = `Beneficio: +${e.B.toFixed(2)} €`;
+
+      drawTPlot(e);
+      drawYPlot(e);
+      drawWPlot(e);
+      drawZPlot(e);
+    }
+
+    // -------------------------------------------------------------------------
+    // BLOQUE 2: CARTONERA DE 12 HUEVOS
+    // -------------------------------------------------------------------------
+    let activeDozen = null;
+
+    function renderDozen(dozen, highlightEggIdx = -1) {
+      activeDozen = dozen;
+      const grid = document.getElementById("cartonGrid");
+      grid.innerHTML = dozen.eggs.map((e, i) => `
+        <div class="egg-tile t-${e.C} ${i === highlightEggIdx ? "active" : ""}" data-eidx="${i}" title="Clic para ver U₁, U₂, U₃ arriba">
+          <div class="egg-num">Huevo #${i + 1}</div>
+          <div class="egg-cat">${e.C}</div>
+          <div class="egg-w">${e.W.toFixed(2)} g</div>
+          <div class="egg-b">+${e.B.toFixed(2)} €</div>
+        </div>
+      `).join("");
+
+      document.getElementById("dozenSummary").innerHTML = `
+        <span>Docena #${dozen.idx} · ${dozen.cntM} M · ${dozen.cntL} L · ${dozen.cntXL} XL</span>
+        <strong>D = ${dozen.sumP.toFixed(2)} € − 0.24 € = ${dozen.D.toFixed(2)} €</strong>
+      `;
+    }
+
+    // -------------------------------------------------------------------------
+    // BLOQUE 3: N DOCENAS CON MATRIZ m × n
+    // -------------------------------------------------------------------------
+    let batchDozens = [];
+
+    function colorForD(d) {
+      if (d < 1.80) return "#cbd5e1";
+      if (d < 2.20) return "#86efac";
+      if (d < 2.60) return "#22c55e";
+      return "#15803d";
+    }
+
+    function runBatch() {
+      const n = Number(document.getElementById("batchSize").value) || 250;
+      const list = new Array(n);
+      let sumD = 0, minD = Infinity, maxD = -Infinity;
+      let totM = 0, totL = 0, totXL = 0;
+
+      for (let i = 0; i < n; i++) {
+        const d = simulateDozen(i + 1);
+        list[i] = d;
+        sumD += d.D;
+        if (d.D < minD) minD = d.D;
+        if (d.D > maxD) maxD = d.D;
+        totM += d.cntM;
+        totL += d.cntL;
+        totXL += d.cntXL;
+      }
+
+      batchDozens = list;
+      const meanD = sumD / n;
+      const totalEggs = n * 12;
+
+      document.getElementById("kpiMeanD").textContent = `${meanD.toFixed(3)} €`;
+      document.getElementById("kpiRangeD").textContent = `${minD.toFixed(2)} / ${maxD.toFixed(2)} €`;
+      document.getElementById("kpiCountSub").textContent = `en ${n.toLocaleString("es-ES")} docenas`;
+      document.getElementById("kpiCats").textContent =
+        `${((totM / totalEggs) * 100).toFixed(1)}% M · ${((totL / totalEggs) * 100).toFixed(1)}% L · ${((totXL / totalEggs) * 100).toFixed(1)}% XL`;
+
+      // Matriz m × n exacta
+      let cols = 25, rows = 10, gapPx = 4, radPx = 4;
+      if (n === 1000) { cols = 50; rows = 20; gapPx = 2; radPx = 2; }
+      else if (n === 5000) { cols = 100; rows = 50; gapPx = 1; radPx = 1; }
+
+      document.getElementById("dotsTitleText").innerHTML =
+        `<strong>Mapa de docenas</strong> (matriz ${rows} × ${cols} = ${n.toLocaleString("es-ES")} docenas)`;
+
+      const grid = document.getElementById("dotsGrid");
+      grid.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
+      grid.style.gap = `${gapPx}px`;
+
+      const htmlDots = new Array(n);
+      for (let i = 0; i < n; i++) {
+        const d = list[i];
+        htmlDots[i] = `<div class="dot" style="background:${colorForD(d.D)}; border-radius:${radPx}px" data-didx="${i}" title="Docena #${d.idx} · D = ${d.D.toFixed(2)} € (${d.cntM}M, ${d.cntL}L, ${d.cntXL}XL)"></div>`;
+      }
+      grid.innerHTML = htmlDots.join("");
+
+      // Tabla (primeras 250)
+      const shown = list.slice(0, 250);
+      document.getElementById("batchTableBody").innerHTML = shown.map((d, i) => `
+        <tr class="row-click" data-didx="${i}">
+          <td>${d.idx}</td>
+          <td>${d.cntM}</td>
+          <td>${d.cntL}</td>
+          <td>${d.cntXL}</td>
+          <td>${d.sumP.toFixed(2)}</td>
+          <td>−0.24</td>
+          <td><strong>${d.D.toFixed(2)}</strong></td>
+        </tr>
+      `).join("");
+
+      // Cargar la primera docena en la cartonera
+      renderDozen(list[0]);
+    }
+
+    function openDozenFromBatch(idx) {
+      const d = batchDozens[idx];
+      if (!d) return;
+      renderDozen(d, 0);
+      renderEgg(d.eggs[0].u1, d.eggs[0].u2, d.eggs[0].u3);
+      document.querySelectorAll(".dot.selected").forEach(el => el.classList.remove("selected"));
+      const dot = document.querySelector(`.dot[data-didx="${idx}"]`);
+      if (dot) dot.classList.add("selected");
+      document.getElementById("cartonGrid").scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    // -------------------------------------------------------------------------
+    // EVENTOS
+    // -------------------------------------------------------------------------
+    document.getElementById("u1Range").addEventListener("input", (ev) => renderEgg(Number(ev.target.value), curU.u2, curU.u3));
+    document.getElementById("u2Range").addEventListener("input", (ev) => renderEgg(curU.u1, Number(ev.target.value), curU.u3));
+    document.getElementById("u3Range").addEventListener("input", (ev) => renderEgg(curU.u1, curU.u2, Number(ev.target.value)));
+
+    document.getElementById("btnRandomEgg").addEventListener("click", () => {
+      renderEgg(Math.random(), Math.random(), Math.random());
+    });
+
+    document.getElementById("btnExampleC").addEventListener("click", () => {
+      renderEgg(0.8223, 0.9154, 0.9512);
+    });
+
+    document.getElementById("btnNewDozen").addEventListener("click", () => {
+      const d = simulateDozen(1);
+      renderDozen(d, 0);
+      renderEgg(d.eggs[0].u1, d.eggs[0].u2, d.eggs[0].u3);
+    });
+
+    document.getElementById("cartonGrid").addEventListener("click", (ev) => {
+      const tile = ev.target.closest(".egg-tile[data-eidx]");
+      if (!tile || !activeDozen) return;
+      const idx = Number(tile.dataset.eidx);
+      const egg = activeDozen.eggs[idx];
+      renderDozen(activeDozen, idx);
+      renderEgg(egg.u1, egg.u2, egg.u3);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+
+    document.getElementById("btnRunBatch").addEventListener("click", runBatch);
+    document.getElementById("batchSize").addEventListener("change", runBatch);
+
+    document.getElementById("dotsGrid").addEventListener("click", (ev) => {
+      const dot = ev.target.closest(".dot[data-didx]");
+      if (dot) openDozenFromBatch(Number(dot.dataset.didx));
+    });
+
+    document.getElementById("batchTableBody").addEventListener("click", (ev) => {
+      const tr = ev.target.closest("tr[data-didx]");
+      if (tr) openDozenFromBatch(Number(tr.dataset.didx));
+    });
+
+    window.addEventListener("resize", () => renderEgg(curU.u1, curU.u2, curU.u3));
+
+    // Inicio: ejemplo exacto del Inciso c + tanda inicial de 250 docenas
+    renderEgg(0.8223, 0.9154, 0.9512);
+    runBatch();
+  })();
+  </script>
+</body>
+</html>
